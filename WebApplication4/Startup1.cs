@@ -17,7 +17,6 @@ namespace WebApplication4
     public void Configuration(IAppBuilder app) {
       // For more information on how to configure your application, visit http://go.microsoft.com/fwlink/?LinkID=316888
 
-
       var builder = new ContainerBuilder();
 
       // STANDARD SIGNALR SETUP:
@@ -33,7 +32,7 @@ namespace WebApplication4
       var container = builder.Build();
       //Have to set both to get the HubPipeline module working
       config.Resolver = new Autofac.Integration.SignalR.AutofacDependencyResolver(container);
-      GlobalHost.DependencyResolver = config.Resolver;
+
 
       // OWIN SIGNALR SETUP:
 
@@ -41,7 +40,10 @@ namespace WebApplication4
       app.UseAutofacMiddleware(container);
       app.MapSignalR(config);
 
-      GlobalHost.HubPipeline.AddModule(new SignalRExceptionHandler());
+
+      //"the" solution for adding HubPipelineModules with DI: https://github.com/SignalR/SignalR/issues/2226
+      var hubPipeline = config.Resolver.Resolve<Microsoft.AspNet.SignalR.Hubs.IHubPipeline>();
+      hubPipeline.AddModule(new SignalRExceptionHandler());
     }
   }
 }
